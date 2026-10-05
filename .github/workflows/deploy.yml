@@ -35,10 +35,10 @@ jobs:
       - name: Build project for GitHub Pages
         run: npm run build
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          VITE_FIREBASE_DB_URL: ${{ secrets.VITE_FIREBASE_DB_URL }}
-          VITE_COLLABORATIONS_API_URL: ${{ secrets.VITE_COLLABORATIONS_API_URL }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || vars.VITE_SUPABASE_ANON_KEY }}
+          VITE_FIREBASE_DB_URL: ${{ secrets.VITE_FIREBASE_DB_URL || vars.VITE_FIREBASE_DB_URL }}
+          VITE_COLLABORATIONS_API_URL: ${{ secrets.VITE_COLLABORATIONS_API_URL || vars.VITE_COLLABORATIONS_API_URL }}
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3
