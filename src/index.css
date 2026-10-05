@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@source "../index.html";
+@source "../src/**/*.{js,jsx}";
 
 @theme {
   --animate-float: float 6s ease-in-out infinite;
