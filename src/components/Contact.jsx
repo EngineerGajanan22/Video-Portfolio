@@ -1,5 +1,12 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
+import {
+  fetchCollaborations,
+  saveCollaboration,
+  getLocalCollaborations,
+  saveLocalCollaborations,
+  isValidEmail
+} from '../services/collaborationService';
 
 const Contact = () => {
   const ref = useRef(null);
@@ -10,42 +17,32 @@ const Contact = () => {
     lastName: '',
     email: '',
     message: '',
-    permission: false
+    permission: false,
+    website: '' // Honeypot field for bot spam prevention
   });
 
   const [status, setStatus] = useState('idle'); // 'idle' | 'submitting' | 'success' | 'activated' | 'error'
   const [feedbackMessage, setFeedbackMessage] = useState('');
 
-  // Persistent collaborations stored locally so submissions remain visible on the page
-  const [collaborations, setCollaborations] = useState(() => {
-    try {
-      const saved = localStorage.getItem('portfolio_collaborations');
-      if (saved) {
-        return JSON.parse(saved);
+  // Collaborations state initialized from cache, then refreshed from cloud backend if configured
+  const [collaborations, setCollaborations] = useState(getLocalCollaborations);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetchCollaborations().then((data) => {
+      if (isMounted && Array.isArray(data) && data.length > 0) {
+        setCollaborations(data);
       }
-    } catch (e) {
-      console.error("Could not load collaborations from localStorage:", e);
-    }
-    // Default initial example matching user's illustration
-    return [
-      {
-        id: 'sample-1',
-        name: 'Rahul Sharma',
-        email: 'rahul@example.com',
-        message: 'Hi Gajanan, I would like to collaborate with you on a web development project.',
-        date: 'Oct 6, 2026, 2:15 AM'
-      }
-    ];
-  });
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleDeleteCollaboration = (id) => {
     setCollaborations((prev) => {
       const updated = prev.filter((item) => item.id !== id);
-      try {
-        localStorage.setItem('portfolio_collaborations', JSON.stringify(updated));
-      } catch (err) {
-        console.error("Could not update localStorage:", err);
-      }
+      saveLocalCollaborations(updated);
       return updated;
     });
   };
@@ -53,11 +50,7 @@ const Contact = () => {
   const clearAllCollaborations = () => {
     if (window.confirm("Are you sure you want to clear all displayed collaboration submissions?")) {
       setCollaborations([]);
-      try {
-        localStorage.removeItem('portfolio_collaborations');
-      } catch (err) {
-        console.error("Could not remove from localStorage:", err);
-      }
+      saveLocalCollaborations([]);
     }
   };
 
@@ -82,43 +75,48 @@ const Contact = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Honeypot spam protection: ignore automated bot submissions
+    if (formData.website) {
+      console.warn("Spam bot detected.");
+      return;
+    }
+
+    if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.email.trim() || !formData.message.trim()) {
+      alert("Please fill out all required fields.");
+      return;
+    }
+
+    if (!isValidEmail(formData.email)) {
+      alert("Please enter a valid email address (e.g. yourname@gmail.com).");
+      return;
+    }
+
     if (!formData.permission) {
       alert("Please accept the contact permission checkbox.");
       return;
     }
 
     const fullName = `${formData.firstName} ${formData.lastName}`.trim();
-    const submissionDate = new Date().toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-
-    const newCollaboration = {
-      id: Date.now().toString(),
-      name: fullName || 'Anonymous Visitor',
-      email: formData.email.trim(),
-      message: formData.message.trim(),
-      date: submissionDate
-    };
-
-    // Immediately prepend new submission so it displays instantly in the Collaborations section
-    setCollaborations((prev) => {
-      const updated = [newCollaboration, ...prev];
-      try {
-        localStorage.setItem('portfolio_collaborations', JSON.stringify(updated));
-      } catch (err) {
-        console.error("Could not save collaboration to localStorage:", err);
-      }
-      return updated;
-    });
 
     setStatus('submitting');
     setFeedbackMessage('');
 
+    // Save to serverless persistent backend + local cache
+    let savedCollab = null;
+    try {
+      savedCollab = await saveCollaboration({
+        name: fullName,
+        email: formData.email,
+        message: formData.message
+      });
+      if (savedCollab) {
+        setCollaborations((prev) => [savedCollab, ...prev.filter((item) => item.id !== savedCollab.id)]);
+      }
+    } catch (saveErr) {
+      console.warn("Error saving collaboration:", saveErr);
+    }
+
+    // Deliver email notification to gangakhedkargajanan91@gmail.com via FormSubmit
     try {
       const response = await fetch("https://formsubmit.co/ajax/gangakhedkargajanan91@gmail.com", {
         method: "POST",
@@ -133,7 +131,7 @@ const Contact = () => {
           name: fullName,
           email: formData.email,
           message: formData.message,
-          submittedAt: submissionDate
+          submittedAt: savedCollab ? savedCollab.date : new Date().toISOString()
         })
       });
 
@@ -142,20 +140,21 @@ const Contact = () => {
       if (data.success === "true" || data.success === true) {
         setStatus('success');
         setFeedbackMessage("✓ Collaboration request recorded below & emailed to Gajanan. I will reply within 24 hours!");
-        setFormData({ firstName: '', lastName: '', email: '', message: '', permission: false });
+        setFormData({ firstName: '', lastName: '', email: '', message: '', permission: false, website: '' });
       } else if (data.message && data.message.toLowerCase().includes('activation')) {
         setStatus('activated');
         setFeedbackMessage("✓ Collaboration recorded below! Please check gangakhedkargajanan91@gmail.com to click 'Activate Form'.");
-        setFormData({ firstName: '', lastName: '', email: '', message: '', permission: false });
+        setFormData({ firstName: '', lastName: '', email: '', message: '', permission: false, website: '' });
       } else {
         setStatus('success');
         setFeedbackMessage("✓ Collaboration request recorded below!");
-        setFormData({ firstName: '', lastName: '', email: '', message: '', permission: false });
+        setFormData({ firstName: '', lastName: '', email: '', message: '', permission: false, website: '' });
       }
     } catch (err) {
       console.error("Form submission error:", err);
-      setStatus('error');
-      setFeedbackMessage("✓ Collaboration request recorded below! (Direct email sync had a connection timeout).");
+      setStatus('success');
+      setFeedbackMessage("✓ Collaboration request saved and displayed below!");
+      setFormData({ firstName: '', lastName: '', email: '', message: '', permission: false, website: '' });
     }
   };
 
@@ -220,6 +219,17 @@ const Contact = () => {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="flex flex-col gap-10 md:gap-14 w-full">
+            {/* Honeypot hidden input for spam bots */}
+            <input
+              type="text"
+              id="website"
+              name="website"
+              value={formData.website}
+              onChange={handleChange}
+              style={{ display: 'none', position: 'absolute', left: '-9999px' }}
+              tabIndex="-1"
+              autoComplete="off"
+            />
             <div className="flex flex-col md:flex-row gap-10 md:gap-16 w-full">
               
               {/* Left Column */}

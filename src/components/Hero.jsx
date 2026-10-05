@@ -113,7 +113,7 @@ const Hero = () => {
             
             {/* Secondary Button */}
             <a 
-              href="/Gajanan_Gangakhedkar_Resume.pdf" 
+              href={`${import.meta.env.BASE_URL}Gajanan_Gangakhedkar_Resume.pdf`} 
               target="_blank"
               rel="noopener noreferrer"
               className="px-6 py-2.5 md:px-7 md:py-3 text-xs md:text-sm rounded-full bg-white text-black font-bold hover:bg-neutral-200 transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg inline-flex items-center gap-1.5 text-center"

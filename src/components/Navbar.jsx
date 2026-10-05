@@ -63,7 +63,7 @@ const Navbar = () => {
         {/* Right Side: Responsive CTA Frame Button */}
         <div className="hidden md:flex items-center gap-3">
           <a 
-            href="/Gajanan_Gangakhedkar_Resume.pdf" 
+            href={`${import.meta.env.BASE_URL}Gajanan_Gangakhedkar_Resume.pdf`} 
             target="_blank"
             rel="noopener noreferrer"
             className={`px-4 py-2 rounded-full text-xs font-bold transition-all duration-300 ${
@@ -89,7 +89,7 @@ const Navbar = () => {
         {/* Mobile Hamburger Trigger Controllers */}
         <div className="lg:hidden flex items-center gap-2">
           <a 
-            href="/Gajanan_Gangakhedkar_Resume.pdf" 
+            href={`${import.meta.env.BASE_URL}Gajanan_Gangakhedkar_Resume.pdf`} 
             target="_blank"
             rel="noopener noreferrer"
             className="md:hidden text-xs font-bold px-3 py-1.5 rounded-full bg-white/20 text-white"
@@ -133,7 +133,7 @@ const Navbar = () => {
           ))}
           <div className="pt-2 flex flex-col gap-2">
              <a 
-               href="/Gajanan_Gangakhedkar_Resume.pdf" 
+               href={`${import.meta.env.BASE_URL}Gajanan_Gangakhedkar_Resume.pdf`} 
                target="_blank"
                rel="noopener noreferrer"
                className="inline-block px-5 py-2.5 rounded-full bg-black/20 text-white font-bold hover:bg-black transition-all duration-300 w-full text-center border border-white/20"

@@ -37,7 +37,7 @@ const Footer = () => {
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-4 text-xs font-bold">
             <a href="https://github.com/EngineerGajanan22" target="_blank" rel="noopener noreferrer" className="underline hover:text-white transition-colors">GitHub</a>
-            <a href="/Gajanan_Gangakhedkar_Resume.pdf" target="_blank" rel="noopener noreferrer" className="underline hover:text-white transition-colors">Resume PDF</a>
+            <a href={`${import.meta.env.BASE_URL}Gajanan_Gangakhedkar_Resume.pdf`} target="_blank" rel="noopener noreferrer" className="underline hover:text-white transition-colors">Resume PDF</a>
             <a href="#contact" className="underline hover:text-white transition-colors">Contact</a>
           </div>
           <p className="text-white/50 font-mono text-[9px] md:text-[10px]">
