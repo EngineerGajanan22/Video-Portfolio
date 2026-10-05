@@ -230,3 +230,7 @@ export const saveCollaboration = async ({ name, email, message }) => {
 
   return newEntry;
 };
+
+// Aliases for compatibility
+export const saveCollaborationSubmission = saveCollaboration;
+export const fetchCollaborationSubmissions = fetchCollaborations;
